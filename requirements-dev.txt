@@ -1,0 +1,12 @@
+# Everything for local development: training deps + test & lint tools.
+-r requirements-train.txt
+pytest==9.1.1
+pytest-cov==7.1.0
+httpx2==2.13.1   # FastAPI TestClient backend (starlette >= 1.7 deprecates plain httpx)
+ruff==0.16.10
+
+# EDA notebook (notebooks/EDA.ipynb)
+matplotlib==3.11.2
+ipykernel==7.4.0
+nbformat==5.11.1
+nbconvert==7.17.1

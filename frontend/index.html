@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AI Content Summarizer</title>
+  <meta name="description" content="Abstractive dialogue summarization with PEGASUS fine-tuned on SAMSum.">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='7' fill='%232a78d6'/><path d='M8 10h16M8 16h12M8 22h7' stroke='white' stroke-width='3' stroke-linecap='round'/></svg>">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <span class="logo" aria-hidden="true"></span>
+      <div>
+        <h1>AI Content Summarizer</h1>
+        <p class="tagline">Abstractive summaries of conversations and long text — PEGASUS fine-tuned on SAMSum</p>
+      </div>
+    </div>
+    <div class="status" id="status" role="status" aria-live="polite">
+      <span class="dot" aria-hidden="true"></span><span id="status-text">Checking model…</span>
+    </div>
+  </header>
+
+  <main class="layout">
+    <section class="panel" aria-labelledby="input-title">
+      <div class="panel-head">
+        <h2 id="input-title">Input</h2>
+        <button type="button" class="link-btn" id="example-btn">Load example dialogue</button>
+      </div>
+      <label for="input" class="visually-hidden">Text to summarize</label>
+      <textarea id="input" spellcheck="false"
+        placeholder="Paste a chat (one “Name: message” per line) or any long text…"></textarea>
+      <div class="input-foot">
+        <span id="counter" class="counter">0 characters · 0 words</span>
+        <div class="actions">
+          <button type="button" class="btn secondary" id="clear-btn">Clear</button>
+          <button type="button" class="btn primary" id="summarize-btn" disabled>
+            <span class="spinner" aria-hidden="true"></span>
+            <span class="btn-label">Summarize</span>
+          </button>
+        </div>
+      </div>
+      <p class="hint">Tip: press <kbd>Ctrl</kbd> + <kbd>Enter</kbd> to summarize.</p>
+    </section>
+
+    <section class="panel" aria-labelledby="output-title">
+      <div class="panel-head">
+        <h2 id="output-title">Summary</h2>
+        <button type="button" class="btn ghost" id="copy-btn" disabled>Copy</button>
+      </div>
+
+      <div id="error" class="alert" role="alert" hidden></div>
+
+      <div id="summary" class="summary empty" aria-live="polite">
+        Your summary will appear here.
+      </div>
+      <p id="truncated" class="warning" hidden>
+        The input was longer than the model's token limit, so only the beginning was summarized.
+      </p>
+
+      <dl class="stats" id="stats" hidden>
+        <div class="stat">
+          <dt>Original</dt>
+          <dd><span id="orig-chars">–</span><small> chars · <span id="orig-words">–</span> words</small></dd>
+        </div>
+        <div class="stat">
+          <dt>Summary</dt>
+          <dd><span id="sum-chars">–</span><small> chars · <span id="sum-words">–</span> words</small></dd>
+        </div>
+        <div class="stat">
+          <dt>Compression</dt>
+          <dd><span id="ratio">–</span><small>× shorter</small></dd>
+        </div>
+        <div class="stat">
+          <dt>Time</dt>
+          <dd><span id="time">–</span><small> s</small></dd>
+        </div>
+      </dl>
+      <div class="bar" id="bar" hidden aria-hidden="true">
+        <div class="bar-fill" id="bar-fill"></div>
+      </div>
+      <p class="bar-caption" id="bar-caption" hidden></p>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <span id="model-info">Model: –</span>
+    <nav>
+      <a href="/docs">API docs</a>
+      <a href="/health">Health</a>
+    </nav>
+  </footer>
+
+  <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+  <script src="app.js"></script>
+</body>
+</html>

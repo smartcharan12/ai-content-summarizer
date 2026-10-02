@@ -1,0 +1,27 @@
+# EC2 overrides, used together with the main file:
+#
+#   docker compose -f docker-compose.yml -f deploy/docker-compose.aws.yml --profile proxy up -d
+#
+# - the API is reachable only through nginx (port 80); :8000 is not published
+# - container logs go to CloudWatch Logs (the instance role needs
+#   logs:CreateLogGroup, logs:CreateLogStream and logs:PutLogEvents)
+services:
+  api:
+    ports: !reset []
+    environment:
+      APP_ENV: production
+      LOG_FORMAT: json
+    logging:
+      driver: awslogs
+      options:
+        awslogs-region: ${AWS_REGION:?set AWS_REGION}
+        awslogs-group: /ai-content-summarizer/api
+        awslogs-create-group: "true"
+
+  proxy:
+    logging:
+      driver: awslogs
+      options:
+        awslogs-region: ${AWS_REGION:?set AWS_REGION}
+        awslogs-group: /ai-content-summarizer/nginx
+        awslogs-create-group: "true"

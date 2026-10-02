@@ -1,0 +1,111 @@
+{
+  "dataset": "knkarthick/samsum",
+  "requested_revision": null,
+  "resolved_commit": "6b929ff10edec703164e3ddb2e94aae058c9ab5f",
+  "ingested_at": "2026-10-02T12:59:09.224055+00:00",
+  "splits": {
+    "train": {
+      "file": "train.csv",
+      "sha256": "8e1c74de2bd749e62b0bf218b2f0c9f5d25b8ecec605327065c2abe3c458f040",
+      "rows": 14731,
+      "columns": [
+        "id",
+        "dialogue",
+        "summary"
+      ],
+      "dialogue_words": {
+        "count": 14731,
+        "mean": 93.79,
+        "std": 74.03,
+        "min": 7,
+        "p25": 39.0,
+        "median": 73.0,
+        "p75": 128.0,
+        "p95": 237.0,
+        "p99": 351.0,
+        "max": 803
+      },
+      "summary_words": {
+        "count": 14731,
+        "mean": 20.32,
+        "std": 11.15,
+        "min": 1,
+        "p25": 12.0,
+        "median": 18.0,
+        "p75": 27.0,
+        "p95": 43.0,
+        "p99": 53.0,
+        "max": 64
+      }
+    },
+    "validation": {
+      "file": "validation.csv",
+      "sha256": "f0a4cdcf1805340829a5a5d48677d8c07921f622766a47cef67916cd4f8acf9b",
+      "rows": 818,
+      "columns": [
+        "id",
+        "dialogue",
+        "summary"
+      ],
+      "dialogue_words": {
+        "count": 818,
+        "mean": 91.64,
+        "std": 74.43,
+        "min": 10,
+        "p25": 38.0,
+        "median": 70.0,
+        "p75": 127.0,
+        "p95": 225.7499999999999,
+        "p99": 357.6600000000001,
+        "max": 540
+      },
+      "summary_words": {
+        "count": 818,
+        "mean": 20.28,
+        "std": 11.2,
+        "min": 3,
+        "p25": 12.0,
+        "median": 18.0,
+        "p75": 26.0,
+        "p95": 43.0,
+        "p99": 53.83000000000004,
+        "max": 59
+      }
+    },
+    "test": {
+      "file": "test.csv",
+      "sha256": "0c1da58c77766d5eefaf89ee6c48133481df0730d706bcf826d01efd274d5e13",
+      "rows": 819,
+      "columns": [
+        "id",
+        "dialogue",
+        "summary"
+      ],
+      "dialogue_words": {
+        "count": 819,
+        "mean": 95.51,
+        "std": 75.18,
+        "min": 9,
+        "p25": 42.0,
+        "median": 74.0,
+        "p75": 126.0,
+        "p95": 252.29999999999973,
+        "p99": 352.27999999999975,
+        "max": 516
+      },
+      "summary_words": {
+        "count": 819,
+        "mean": 20.02,
+        "std": 10.65,
+        "min": 3,
+        "p25": 12.0,
+        "median": 18.0,
+        "p75": 26.0,
+        "p95": 41.0,
+        "p99": 50.0,
+        "max": 58
+      }
+    }
+  },
+  "total_rows": 16368
+}

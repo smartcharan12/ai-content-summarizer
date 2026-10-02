@@ -1,0 +1,215 @@
+# CI/CD: lint -> test -> smoke pipeline -> Docker build + container test
+#        -> (main only, when AWS is configured) push to ECR -> deploy to EC2
+#
+# Jobs 1-2 need no secrets and run on every push and pull request.
+# Jobs 3-4 run only on pushes to main AND when the repository variable
+# AWS_DEPLOY_ENABLED is "true", so a fresh fork/clone is green without AWS.
+#
+# Required configuration for deployment (Settings -> Secrets and variables -> Actions):
+#   secrets.AWS_ROLE_ARN        IAM role assumed via GitHub OIDC (no long-lived keys)
+#   vars.AWS_DEPLOY_ENABLED     "true" to enable jobs 3-4
+#   vars.AWS_REGION             e.g. ap-south-1
+#   vars.ECR_REPOSITORY         e.g. ai-content-summarizer
+#   vars.APP_URL                optional, e.g. http://<elastic-ip> (post-deploy check)
+# Setup guide: docs/AWS_DEPLOYMENT.md
+name: CI/CD
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  PYTHON_VERSION: "3.12"
+  TORCH_VERSION: "2.14.1"
+  TINY_MODEL: hf-internal-testing/tiny-random-PegasusForConditionalGeneration
+
+jobs:
+  # ---------------------------------------------------------------- 1
+  lint-and-test:
+    name: Lint, test & smoke pipeline
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+          cache-dependency-path: requirements*.txt
+
+      - name: Cache Hugging Face downloads (tiny test model, tokenizer, SAMSum)
+        uses: actions/cache@v6
+        with:
+          path: ~/.cache/huggingface
+          key: hf-${{ hashFiles('config/*.yaml') }}
+          restore-keys: hf-
+
+      - name: Install dependencies (CPU PyTorch)
+        run: |
+          python -m pip install --upgrade pip
+          pip install "torch==${TORCH_VERSION}" --index-url https://download.pytorch.org/whl/cpu
+          pip install -r requirements-dev.txt
+          pip install -e .
+
+      - name: Lint (ruff)
+        run: |
+          ruff check src api tests
+          ruff format --check src api tests
+
+      - name: Unit tests
+        env:
+          LOG_TO_FILE: "false"
+        run: pytest -m "not slow" --cov=summarizer --cov=api --cov-report=term-missing
+
+      - name: Integration tests (tiny PEGASUS model)
+        env:
+          LOG_TO_FILE: "false"
+        run: pytest -m slow
+
+      - name: End-to-end training pipeline smoke run
+        env:
+          SMOKE_TEST: "1"
+          LOG_TO_FILE: "false"
+        run: python -m summarizer.pipeline.training_pipeline
+
+  # ---------------------------------------------------------------- 2
+  docker:
+    name: Docker build & container test
+    needs: lint-and-test
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: docker/setup-buildx-action@v4
+
+      - name: Build image
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          load: true
+          tags: ai-content-summarizer:ci
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Run container and call the API
+        run: |
+          docker image ls ai-content-summarizer:ci
+          docker run -d --name api -p 8000:8000 \
+            -e MODEL_SOURCE=path -e MODEL_NAME_OR_PATH="${TINY_MODEL}" \
+            ai-content-summarizer:ci
+          for _ in $(seq 1 60); do
+            if curl -fsS http://localhost:8000/health; then break; fi
+            sleep 3
+          done
+          curl -fsS http://localhost:8000/health
+          curl -fsS -X POST http://localhost:8000/summarize \
+            -H "Content-Type: application/json" \
+            -d '{"text": "Anna: are we still meeting at noon?\nBob: yes, see you at the cafe."}'
+          test "$(curl -s -o /dev/null -w '%{http_code}' -X POST http://localhost:8000/summarize \
+            -H 'Content-Type: application/json' -d '{"text": " "}')" = "422"
+          test "$(docker exec api id -u)" = "1001"   # not running as root
+
+      - name: Container logs
+        if: always()
+        run: docker logs api || true
+
+  # ---------------------------------------------------------------- 3
+  push-to-ecr:
+    name: Push image to Amazon ECR
+    needs: docker
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && vars.AWS_DEPLOY_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      id-token: write   # OIDC token for AWS
+    outputs:
+      image: ${{ steps.image.outputs.uri }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: aws-actions/configure-aws-credentials@v6
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - id: ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - id: image
+        env:
+          REGISTRY: ${{ steps.ecr.outputs.registry }}
+          REPOSITORY: ${{ vars.ECR_REPOSITORY }}
+        run: echo "uri=${REGISTRY}/${REPOSITORY}:${GITHUB_SHA}" >> "$GITHUB_OUTPUT"
+
+      - uses: docker/setup-buildx-action@v4
+
+      - name: Build and push (tagged with commit SHA and latest)
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          push: true
+          tags: |
+            ${{ steps.image.outputs.uri }}
+            ${{ steps.ecr.outputs.registry }}/${{ vars.ECR_REPOSITORY }}:latest
+          cache-from: type=gha
+
+  # ---------------------------------------------------------------- 4
+  deploy:
+    name: Deploy to EC2 (via SSM)
+    needs: push-to-ecr
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment: production   # add required reviewers here for manual approval
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: aws-actions/configure-aws-credentials@v6
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - name: Run deploy script on the instance
+        env:
+          IMAGE: ${{ needs.push-to-ecr.outputs.image }}
+          REGION: ${{ vars.AWS_REGION }}
+        run: |
+          command_id=$(aws ssm send-command \
+            --document-name AWS-RunShellScript \
+            --targets "Key=tag:App,Values=ai-content-summarizer" \
+            --comment "deploy ${GITHUB_SHA}" \
+            --timeout-seconds 1200 \
+            --parameters "commands=[\"sudo -u ec2-user /opt/ai-content-summarizer/deploy/deploy.sh ${IMAGE} ${REGION}\"]" \
+            --query Command.CommandId --output text)
+          echo "SSM command: ${command_id}"
+          # Poll (first deploy downloads the model, which can take several minutes).
+          for _ in $(seq 1 120); do
+            status=$(aws ssm list-commands --command-id "${command_id}" --query 'Commands[0].Status' --output text)
+            echo "status: ${status}"
+            case "${status}" in
+              Success) break ;;
+              Pending|InProgress|Delayed) sleep 10 ;;
+              *) break ;;
+            esac
+          done
+          aws ssm list-command-invocations --command-id "${command_id}" --details \
+            --query 'CommandInvocations[].CommandPlugins[].Output' --output text
+          test "${status}" = "Success"
+
+      - name: Public health check
+        if: vars.APP_URL != ''
+        env:
+          APP_URL: ${{ vars.APP_URL }}
+        run: curl -fsS "${APP_URL}/health"

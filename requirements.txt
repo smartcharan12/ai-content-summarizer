@@ -1,0 +1,16 @@
+# Runtime dependencies for the inference API (what goes into the Docker image).
+# Tested with Python 3.12 on 2026-10-02.
+#
+# PyTorch is installed SEPARATELY so you can choose the build:
+#   CPU (laptop, Docker, EC2 without GPU):
+#     pip install torch==2.14.1 --index-url https://download.pytorch.org/whl/cpu
+#   NVIDIA GPU: follow https://pytorch.org/get-started/locally/
+transformers[sentencepiece]==5.18.0
+safetensors==0.8.0
+huggingface_hub==1.33.0
+fastapi==0.142.2
+uvicorn[standard]==0.54.0
+pydantic==2.13.5
+pydantic-settings==2.15.0
+PyYAML==6.0.3
+python-dotenv==1.2.4

@@ -1,0 +1,10 @@
+# Training / evaluation / EDA dependencies (NOT needed in the API image).
+-r requirements.txt
+datasets==5.0.1
+tabulate==0.10.0
+rouge_score==0.1.2
+nltk==3.10.3
+sacrebleu==2.6.0
+accelerate==1.15.0
+pandas==3.0.6
+numpy==2.5.3

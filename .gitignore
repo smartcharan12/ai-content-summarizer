@@ -1,0 +1,39 @@
+# --- Secrets ---------------------------------------------------------------
+.env
+*.pem
+*.key
+
+# --- Python ----------------------------------------------------------------
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+.venv/
+venv/
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+.ipynb_checkpoints/
+
+# --- Data & model artifacts (large; reproduced by the pipeline) ------------
+data/raw/*
+data/validated/*
+data/processed/*
+artifacts/models/*
+artifacts/checkpoints/
+artifacts/smoke/
+!**/.gitkeep
+# Small reports ARE committed so the README can link real results.
+!artifacts/reports/
+
+# --- Logs, caches, OS/editor files -----------------------------------------
+logs/
+runs/
+wandb/
+.cache/
+.DS_Store
+.idea/
+.vscode/

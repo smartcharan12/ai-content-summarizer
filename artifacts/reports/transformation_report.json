@@ -1,0 +1,77 @@
+{
+  "created_at": "2026-10-02T13:34:49.126656+00:00",
+  "tokenizer_name": "google/pegasus-xsum",
+  "max_input_length": 512,
+  "max_target_length": 64,
+  "padding": "dynamic",
+  "cleaning": {
+    "normalize_whitespace": true,
+    "normalize_tags": true,
+    "lowercase": false
+  },
+  "splits": {
+    "train": {
+      "rows": 14635,
+      "dialogue_tokens": {
+        "mean": 132.1,
+        "median": 105.0,
+        "p95": 328.0,
+        "max": 1041,
+        "limit": 512,
+        "truncated_rows": 94,
+        "truncated_fraction": 0.0064
+      },
+      "summary_tokens": {
+        "mean": 25.7,
+        "median": 23.0,
+        "p95": 53.0,
+        "max": 80,
+        "limit": 64,
+        "truncated_rows": 170,
+        "truncated_fraction": 0.0116
+      }
+    },
+    "validation": {
+      "rows": 818,
+      "dialogue_tokens": {
+        "mean": 129.4,
+        "median": 101.0,
+        "p95": 311.15,
+        "max": 705,
+        "limit": 512,
+        "truncated_rows": 6,
+        "truncated_fraction": 0.0073
+      },
+      "summary_tokens": {
+        "mean": 25.7,
+        "median": 23.0,
+        "p95": 53.14999999999998,
+        "max": 74,
+        "limit": 64,
+        "truncated_rows": 9,
+        "truncated_fraction": 0.011
+      }
+    },
+    "test": {
+      "rows": 819,
+      "dialogue_tokens": {
+        "mean": 135.0,
+        "median": 105.0,
+        "p95": 341.0999999999999,
+        "max": 691,
+        "limit": 512,
+        "truncated_rows": 3,
+        "truncated_fraction": 0.0037
+      },
+      "summary_tokens": {
+        "mean": 25.4,
+        "median": 23.0,
+        "p95": 51.0,
+        "max": 82,
+        "limit": 64,
+        "truncated_rows": 8,
+        "truncated_fraction": 0.0098
+      }
+    }
+  }
+}

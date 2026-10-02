@@ -1,0 +1,45 @@
+# Local and single-server deployment.
+#
+#   docker compose up --build                  # API + UI on http://localhost:8000
+#   docker compose --profile proxy up -d       # + nginx on :80 with rate limiting
+#
+# Configuration comes from .env (optional; see .env.example). On AWS EC2 this
+# file is combined with deploy/docker-compose.aws.yml (CloudWatch logging, no
+# direct :8000 exposure) - see docs/AWS_DEPLOYMENT.md.
+name: ai-content-summarizer
+
+services:
+  api:
+    build: .
+    # On EC2, IMAGE is set to the ECR image pushed by CI; locally it is built.
+    image: ${IMAGE:-ai-content-summarizer:latest}
+    env_file:
+      - path: .env
+        required: false
+    ports:
+      - "8000:8000"
+    volumes:
+      # Hugging Face download cache: the ~2.3 GB model is fetched once, not on every restart.
+      - hf-cache:/app/.cache/huggingface
+      # Trained models + registry.json (used when MODEL_SOURCE=registry).
+      - ./artifacts/models:/app/artifacts/models:ro
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 4g   # fp32 PEGASUS needs ~2.5-3 GB; fail fast instead of swapping the host
+
+  proxy:
+    image: nginx:stable-alpine
+    profiles: ["proxy"]
+    depends_on:
+      api:
+        condition: service_healthy
+    ports:
+      - "80:80"
+    volumes:
+      - ./deploy/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    restart: unless-stopped
+
+volumes:
+  hf-cache:

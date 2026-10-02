@@ -1,0 +1,501 @@
+{
+  "status": "passed",
+  "validated_at": "2026-10-02T13:44:44.886839+00:00",
+  "rules": {
+    "required_columns": [
+      "id",
+      "dialogue",
+      "summary"
+    ],
+    "min_dialogue_words": 5,
+    "max_dialogue_words": 1500,
+    "min_summary_words": 2,
+    "drop_duplicates": true,
+    "remove_cross_split_leakage": true,
+    "max_drop_fraction": 0.05
+  },
+  "totals": {
+    "rows_in": 16368,
+    "rows_out": 16272
+  },
+  "splits": {
+    "train": {
+      "split": "train",
+      "rows_in": 14731,
+      "rows_out": 14635,
+      "rows_dropped": 96,
+      "drop_fraction": 0.0065,
+      "checks": [
+        {
+          "name": "missing_dialogue",
+          "description": "dialogue is null",
+          "severity": "drop",
+          "count": 0,
+          "example_ids": []
+        },
+        {
+          "name": "missing_summary",
+          "description": "summary is null",
+          "severity": "drop",
+          "count": 0,
+          "example_ids": []
+        },
+        {
+          "name": "empty_dialogue",
+          "description": "dialogue is empty or whitespace only",
+          "severity": "drop",
+          "count": 0,
+          "example_ids": []
+        },
+        {
+          "name": "empty_summary",
+          "description": "summary is empty or whitespace only",
+          "severity": "drop",
+          "count": 0,
+          "example_ids": []
+        },
+        {
+          "name": "dialogue_too_short",
+          "description": "dialogue has fewer than 5 words",
+          "severity": "drop",
+          "count": 0,
+          "example_ids": []
+        },
+        {
+          "name": "dialogue_too_long",
+          "description": "dialogue has more than 1500 words",
+          "severity": "drop",
+          "count": 0,
+          "example_ids": []
+        },
+        {
+          "name": "summary_too_short",
+          "description": "summary has fewer than 2 words",
+          "severity": "drop",
+          "count": 2,
+          "example_ids": [
+            "13810635",
+            "13727708"
+          ]
+        },
+        {
+          "name": "duplicate_id",
+          "description": "id already seen earlier in the split",
+          "severity": "drop",
+          "count": 0,
+          "example_ids": []
+        },
+        {
+          "name": "duplicate_pair",
+          "description": "identical (dialogue, summary) pair already seen",
+          "severity": "drop",
+          "count": 1,
+          "example_ids": [
+            "13809905"
+          ]
+        },
+        {
+          "name": "summary_longer_than_dialogue",
+          "description": "summary has at least as many words as the dialogue",
+          "severity": "warning",
+          "count": 61,
+          "example_ids": [
+            "13682058",
+            "13728790",
+            "13682027",
+            "13680667",
+            "13864828"
+          ]
+        },
+        {
+          "name": "contains_media_placeholder",
+          "description": "dialogue contains attachment tags such as <file_photo>",
+          "severity": "warning",
+          "count": 2629,
+          "example_ids": [
+            "13730463",
+            "13729567",
+            "13815560",
+            "13716048",
+            "13728653"
+          ]
+        },
+        {
+          "name": "contains_url",
+          "description": "dialogue contains a URL",
+          "severity": "warning",
+          "count": 18,
+          "example_ids": [
+            "13612296",
+            "13612093",
+            "13716732",
+            "13717179",
+            "13716830"
+          ]
+        },
+        {
+          "name": "dialogue_length_outlier",
+          "description": "dialogue words above the IQR fence (262)",
+          "severity": "warning",
+          "count": 536,
+          "example_ids": [
+            "13611672",
+            "13728653",
+            "13716573",
+            "13682071",
+            "13680485"
+          ]
+        },
+        {
+          "name": "shared_dialogue_multiple_summaries",
+          "description": "dialogue appears more than once with different summaries (multiple human annotations - kept on purpose)",
+          "severity": "warning",
+          "count": 941,
+          "example_ids": [
+            "13809976",
+            "13809912",
+            "13810064",
+            "13809921",
+            "13680760"
+          ]
+        },
+        {
+          "name": "cross_split_leakage",
+          "description": "train dialogue also appears in validation/test",
+          "severity": "drop",
+          "count": 93,
+          "example_ids": [
+            "13681895",
+            "13818724",
+            "13810099",
+            "13716767",
+            "13728176"
+          ]
+        }
+      ],
+      "dialogue_words": {
+        "count": 14635,
+        "mean": 93.68,
+        "std": 73.99,
+        "min": 7,
+        "p25": 39.0,
+        "median": 73.0,
+        "p75": 127.0,
+        "p95": 237.0,
+        "p99": 351.0,
+        "max": 803
+      },
+      "summary_words": {
+        "count": 14635,
+        "mean": 20.3,
+        "std": 11.15,
+        "min": 2,
+        "p25": 12.0,
+        "median": 18.0,
+        "p75": 27.0,
+        "p95": 43.0,
+        "p99": 53.0,
+        "max": 64
+      },
+      "blocking_errors": []
+    },
+    "validation": {
+      "split": "validation",
+      "rows_in": 818,
+      "rows_out": 818,
+      "rows_dropped": 0,
+      "drop_fraction": 0.0,
+      "checks": [
+        {
+          "name": "missing_dialogue",
+          "description": "dialogue is null",
+          "severity": "drop",
+          "count": 0,
+          "example_ids": []
+        },
+        {
+          "name": "missing_summary",
+          "description": "summary is null",
+          "severity": "drop",
+          "count": 0,
+          "example_ids": []
+        },
+        {
+          "name": "empty_dialogue",
+          "description": "dialogue is empty or whitespace only",
+          "severity": "drop",
+          "count": 0,
+          "example_ids": []
+        },
+        {
+          "name": "empty_summary",
+          "description": "summary is empty or whitespace only",
+          "severity": "drop",
+          "count": 0,
+          "example_ids": []
+        },
+        {
+          "name": "dialogue_too_short",
+          "description": "dialogue has fewer than 5 words",
+          "severity": "drop",
+          "count": 0,
+          "example_ids": []
+        },
+        {
+          "name": "dialogue_too_long",
+          "description": "dialogue has more than 1500 words",
+          "severity": "drop",
+          "count": 0,
+          "example_ids": []
+        },
+        {
+          "name": "summary_too_short",
+          "description": "summary has fewer than 2 words",
+          "severity": "drop",
+          "count": 0,
+          "example_ids": []
+        },
+        {
+          "name": "duplicate_id",
+          "description": "id already seen earlier in the split",
+          "severity": "drop",
+          "count": 0,
+          "example_ids": []
+        },
+        {
+          "name": "duplicate_pair",
+          "description": "identical (dialogue, summary) pair already seen",
+          "severity": "drop",
+          "count": 0,
+          "example_ids": []
+        },
+        {
+          "name": "summary_longer_than_dialogue",
+          "description": "summary has at least as many words as the dialogue",
+          "severity": "warning",
+          "count": 1,
+          "example_ids": [
+            "13820882"
+          ]
+        },
+        {
+          "name": "contains_media_placeholder",
+          "description": "dialogue contains attachment tags such as <file_photo>",
+          "severity": "warning",
+          "count": 148,
+          "example_ids": [
+            "13819648",
+            "13728448",
+            "13814197",
+            "13820419",
+            "13862537"
+          ]
+        },
+        {
+          "name": "contains_url",
+          "description": "dialogue contains a URL",
+          "severity": "warning",
+          "count": 1,
+          "example_ids": [
+            "13730620"
+          ]
+        },
+        {
+          "name": "dialogue_length_outlier",
+          "description": "dialogue words above the IQR fence (260)",
+          "severity": "warning",
+          "count": 30,
+          "example_ids": [
+            "13821290",
+            "13717185",
+            "13817283",
+            "13682115-1",
+            "13681700"
+          ]
+        },
+        {
+          "name": "shared_dialogue_multiple_summaries",
+          "description": "dialogue appears more than once with different summaries (multiple human annotations - kept on purpose)",
+          "severity": "warning",
+          "count": 0,
+          "example_ids": []
+        }
+      ],
+      "dialogue_words": {
+        "count": 818,
+        "mean": 91.64,
+        "std": 74.43,
+        "min": 10,
+        "p25": 38.0,
+        "median": 70.0,
+        "p75": 127.0,
+        "p95": 225.7499999999999,
+        "p99": 357.6600000000001,
+        "max": 540
+      },
+      "summary_words": {
+        "count": 818,
+        "mean": 20.28,
+        "std": 11.2,
+        "min": 3,
+        "p25": 12.0,
+        "median": 18.0,
+        "p75": 26.0,
+        "p95": 43.0,
+        "p99": 53.83000000000004,
+        "max": 59
+      },
+      "blocking_errors": []
+    },
+    "test": {
+      "split": "test",
+      "rows_in": 819,
+      "rows_out": 819,
+      "rows_dropped": 0,
+      "drop_fraction": 0.0,
+      "checks": [
+        {
+          "name": "missing_dialogue",
+          "description": "dialogue is null",
+          "severity": "drop",
+          "count": 0,
+          "example_ids": []
+        },
+        {
+          "name": "missing_summary",
+          "description": "summary is null",
+          "severity": "drop",
+          "count": 0,
+          "example_ids": []
+        },
+        {
+          "name": "empty_dialogue",
+          "description": "dialogue is empty or whitespace only",
+          "severity": "drop",
+          "count": 0,
+          "example_ids": []
+        },
+        {
+          "name": "empty_summary",
+          "description": "summary is empty or whitespace only",
+          "severity": "drop",
+          "count": 0,
+          "example_ids": []
+        },
+        {
+          "name": "dialogue_too_short",
+          "description": "dialogue has fewer than 5 words",
+          "severity": "drop",
+          "count": 0,
+          "example_ids": []
+        },
+        {
+          "name": "dialogue_too_long",
+          "description": "dialogue has more than 1500 words",
+          "severity": "drop",
+          "count": 0,
+          "example_ids": []
+        },
+        {
+          "name": "summary_too_short",
+          "description": "summary has fewer than 2 words",
+          "severity": "drop",
+          "count": 0,
+          "example_ids": []
+        },
+        {
+          "name": "duplicate_id",
+          "description": "id already seen earlier in the split",
+          "severity": "drop",
+          "count": 0,
+          "example_ids": []
+        },
+        {
+          "name": "duplicate_pair",
+          "description": "identical (dialogue, summary) pair already seen",
+          "severity": "drop",
+          "count": 0,
+          "example_ids": []
+        },
+        {
+          "name": "summary_longer_than_dialogue",
+          "description": "summary has at least as many words as the dialogue",
+          "severity": "warning",
+          "count": 2,
+          "example_ids": [
+            "13864835",
+            "13682118"
+          ]
+        },
+        {
+          "name": "contains_media_placeholder",
+          "description": "dialogue contains attachment tags such as <file_photo>",
+          "severity": "warning",
+          "count": 140,
+          "example_ids": [
+            "13862856",
+            "13680171",
+            "13731487",
+            "13716777",
+            "13862397"
+          ]
+        },
+        {
+          "name": "contains_url",
+          "description": "dialogue contains a URL",
+          "severity": "warning",
+          "count": 2,
+          "example_ids": [
+            "13731258",
+            "13715861"
+          ]
+        },
+        {
+          "name": "dialogue_length_outlier",
+          "description": "dialogue words above the IQR fence (252)",
+          "severity": "warning",
+          "count": 41,
+          "example_ids": [
+            "13716964",
+            "13728509",
+            "13728958",
+            "13716107",
+            "13681541"
+          ]
+        },
+        {
+          "name": "shared_dialogue_multiple_summaries",
+          "description": "dialogue appears more than once with different summaries (multiple human annotations - kept on purpose)",
+          "severity": "warning",
+          "count": 0,
+          "example_ids": []
+        }
+      ],
+      "dialogue_words": {
+        "count": 819,
+        "mean": 95.51,
+        "std": 75.18,
+        "min": 9,
+        "p25": 42.0,
+        "median": 74.0,
+        "p75": 126.0,
+        "p95": 252.29999999999973,
+        "p99": 352.27999999999975,
+        "max": 516
+      },
+      "summary_words": {
+        "count": 819,
+        "mean": 20.02,
+        "std": 10.65,
+        "min": 3,
+        "p25": 12.0,
+        "median": 18.0,
+        "p75": 26.0,
+        "p95": 41.0,
+        "p99": 50.0,
+        "max": 58
+      },
+      "blocking_errors": []
+    }
+  }
+}

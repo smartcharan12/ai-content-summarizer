@@ -1,0 +1,62 @@
+# =============================================================================
+# config.yaml — WHERE things live and WHAT sources are used.
+#
+# Rule of thumb for this project:
+#   config.yaml  -> paths, dataset/model identifiers, file names (rarely change)
+#   params.yaml  -> knobs you tune in experiments (lengths, LR, beams, ...)
+#
+# All relative paths are resolved against the project root, so the pipeline
+# works no matter which directory you launch it from.
+# =============================================================================
+
+project_name: ai-content-summarizer
+artifacts_root: artifacts
+
+data_ingestion:
+  # Hugging Face Hub mirror of SAMSum stored as plain CSV files.
+  # (The original "samsum" Hub entry relied on a loading script that is no
+  #  longer supported by `datasets` >= 3, so we use this script-free mirror.)
+  hf_dataset_name: knkarthick/samsum
+  # Pin a dataset commit for exact reproducibility (null = latest). The commit
+  # actually used is always recorded in ingestion_stats.json.
+  hf_revision: null
+  splits: [train, validation, test]
+  raw_dir: data/raw                         # immutable copy of the source data
+  stats_file: artifacts/reports/ingestion_stats.json
+
+data_validation:
+  raw_dir: data/raw
+  validated_dir: data/validated             # cleaned rows that passed checks
+  report_file: artifacts/reports/validation_report.json
+  required_columns: [id, dialogue, summary]
+
+data_transformation:
+  validated_dir: data/validated
+  processed_dir: data/processed             # tokenized dataset (Arrow format)
+  report_file: artifacts/reports/transformation_report.json
+
+model_trainer:
+  processed_dir: data/processed
+  models_dir: artifacts/models              # one sub-folder per training run
+  checkpoints_dir: artifacts/checkpoints    # intermediate Trainer checkpoints
+  reports_dir: artifacts/reports            # training_<run_id>.json (loss curve, metadata)
+
+model_evaluation:
+  validated_dir: data/validated
+  models_dir: artifacts/models
+  reports_dir: artifacts/reports
+  metrics_file: artifacts/reports/evaluation_metrics.json
+  samples_file: artifacts/reports/evaluation_samples.csv
+  experiments_file: artifacts/reports/generation_experiments.csv
+  # one JSON per evaluated model+profile, so baseline and fine-tuned results sit side by side
+  history_dir: artifacts/reports/evaluations
+
+# In SMOKE_TEST mode every model-dependent output (processed data, models,
+# checkpoints, evaluation reports, registry) is redirected under this folder,
+# so a smoke run can never overwrite real results. raw/validated data is shared.
+smoke_root: artifacts/smoke
+
+model_registry:
+  # Small JSON file that records every trained model version and which one is
+  # "production". The API loads whatever this file points to.
+  registry_file: artifacts/models/registry.json

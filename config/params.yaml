@@ -1,0 +1,135 @@
+# =============================================================================
+# params.yaml — the knobs you tune. Every experiment should be reproducible
+# from (code version + this file), so never hard-code these values in Python.
+# =============================================================================
+
+seed: 42
+
+model:
+  # google/pegasus-xsum was pre-trained + fine-tuned to write one-sentence
+  # "extreme" summaries, which matches SAMSum's short (~20 word) summaries.
+  base_model: google/pegasus-xsum
+
+preprocessing:
+  max_input_length: 512        # dialogue tokens kept (longer inputs are truncated)
+  max_target_length: 64        # summary tokens kept for the labels
+  padding: dynamic             # "dynamic" = pad per batch (faster); "max_length" = pad everything
+  normalize_whitespace: true
+  normalize_tags: true         # <file_photo>/<photo_file>/... -> [photo], <3 -> (heart)  (see EDA §8)
+  lowercase: false             # PEGASUS is cased; lowercasing would hurt it
+
+validation:
+  min_dialogue_words: 5        # shorter "dialogues" carry nothing to summarize
+  max_dialogue_words: 1500     # longer rows are dropped as invalid (SAMSum max is ~800)
+  min_summary_words: 2         # removes junk references such as "test" / "yyy"
+  drop_duplicates: true        # exact (dialogue, summary) duplicates and repeated ids
+  # The same dialogue appears in train AND validation/test (42 test, 47 val rows).
+  # Removing those rows from TRAIN prevents test-set leakage, which inflates ROUGE.
+  remove_cross_split_leakage: true
+  # Safety net: if a split loses more than this share of rows, the upstream
+  # data has probably changed format -> stop the pipeline instead of training.
+  max_drop_fraction: 0.05
+
+training:
+  num_train_epochs: 2
+  learning_rate: 5.0e-5
+  per_device_train_batch_size: 2
+  per_device_eval_batch_size: 4
+  gradient_accumulation_steps: 8   # effective batch = 2 * 8 = 16 (fits a 16 GB T4)
+  optim: adafactor                 # far less optimizer memory than AdamW; the optimizer PEGASUS was trained with
+  weight_decay: 0.01
+  warmup_steps: 0.05               # float < 1 = fraction of total steps (transformers v5 removed warmup_ratio)
+  lr_scheduler_type: linear
+  eval_strategy: epoch             # evaluate after every epoch
+  save_strategy: epoch
+  save_total_limit: 2              # keep only the 2 latest checkpoints on disk
+  logging_steps: 50
+  load_best_model_at_end: true
+  metric_for_best_model: eval_loss
+  greater_is_better: false
+  early_stopping_patience: 2       # stop if eval_loss doesn't improve for 2 evals
+  # PEGASUS is known to overflow (NaN loss) in fp16, so fp16 is deliberately
+  # not offered. auto = bf16 on GPUs that support it (A100, L4, RTX 30xx+),
+  # full fp32 everywhere else (T4, P100, CPU).
+  mixed_precision: auto            # auto | bf16 | no
+  gradient_checkpointing: true     # trades ~20-30% speed for much less GPU memory
+  max_train_samples: null          # null = use the full split
+  max_eval_samples: null
+  keep_checkpoints: false          # delete intermediate checkpoints after the final model is saved
+
+evaluation:
+  num_samples: 200                 # test rows to score (full test set = 819); same rows every run (seeded)
+  batch_size: 8
+  num_examples_to_save: 10         # rows written to evaluation_samples.csv
+  latency_samples: 20              # single-request (batch size 1) latency measured on this many rows
+  bootstrap_resamples: 1000        # resamples for 95% confidence intervals on ROUGE
+  auto_promote: true               # promote a candidate whose ROUGE-L beats production on the same rows
+
+# Generation profiles. "baseline" uses near-default decoding; "optimized" is
+# the profile we expect to do better (to be confirmed by experiments in Phase 4).
+generation:
+  default_profile: optimized
+  profiles:
+    baseline:
+      max_length: 64
+      min_length: 5
+      num_beams: 1                 # greedy decoding
+      length_penalty: 1.0
+      no_repeat_ngram_size: 0
+      early_stopping: false
+    optimized:
+      max_length: 64
+      min_length: 10
+      num_beams: 4                 # beam search
+      length_penalty: 0.8          # < 1 nudges toward shorter summaries
+      no_repeat_ngram_size: 3      # never repeat the same 3-gram
+      early_stopping: true
+
+# Decoding experiments (python -m summarizer.pipeline.evaluation_pipeline --experiments).
+# Each run starts from `base_profile` and changes ONE thing, so the effect of
+# that parameter can be read straight off the results table.
+experiments:
+  num_samples: 100
+  base_profile: optimized
+  runs:
+    - {name: baseline (greedy), profile: baseline}
+    - {name: optimized}
+    - {name: beams=2, num_beams: 2}
+    - {name: beams=6, num_beams: 6}
+    - {name: length_penalty=0.6, length_penalty: 0.6}
+    - {name: length_penalty=1.2, length_penalty: 1.2}
+    - {name: length_penalty=2.0, length_penalty: 2.0}
+    - {name: no n-gram blocking, no_repeat_ngram_size: 0}
+    - {name: min_length=1, min_length: 1}
+    - {name: min_length=20, min_length: 20}
+    - {name: max_length=32, max_length: 32}
+    - {name: early_stopping=false, early_stopping: false}
+
+# -----------------------------------------------------------------------------
+# Smoke-test overrides. When SMOKE_TEST=1 these values are merged over the
+# ones above so the WHOLE pipeline runs on a CPU laptop in a few minutes.
+# The numbers it produces are meaningless; it only proves the code works.
+# -----------------------------------------------------------------------------
+smoke_test:
+  model:
+    base_model: hf-internal-testing/tiny-random-PegasusForConditionalGeneration
+  preprocessing:
+    max_input_length: 128        # the tiny model only has 200 position embeddings
+  training:
+    num_train_epochs: 1
+    per_device_train_batch_size: 2
+    per_device_eval_batch_size: 2
+    gradient_accumulation_steps: 1
+    gradient_checkpointing: false
+    optim: adamw_torch
+    logging_steps: 5
+    max_train_samples: 32
+    max_eval_samples: 16
+  evaluation:
+    num_samples: 8
+    batch_size: 4
+    num_examples_to_save: 3
+    latency_samples: 2
+    bootstrap_resamples: 100
+  experiments:
+    num_samples: 4

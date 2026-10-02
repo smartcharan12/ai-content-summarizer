@@ -1,0 +1,45 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "EcrLogin",
+      "Effect": "Allow",
+      "Action": "ecr:GetAuthorizationToken",
+      "Resource": "*"
+    },
+    {
+      "Sid": "EcrPushThisRepositoryOnly",
+      "Effect": "Allow",
+      "Action": [
+        "ecr:BatchCheckLayerAvailability",
+        "ecr:BatchGetImage",
+        "ecr:CompleteLayerUpload",
+        "ecr:InitiateLayerUpload",
+        "ecr:PutImage",
+        "ecr:UploadLayerPart"
+      ],
+      "Resource": "arn:aws:ecr:<REGION>:<ACCOUNT_ID>:repository/ai-content-summarizer"
+    },
+    {
+      "Sid": "RunDeployScriptOnTaggedInstances",
+      "Effect": "Allow",
+      "Action": "ssm:SendCommand",
+      "Resource": "arn:aws:ec2:<REGION>:<ACCOUNT_ID>:instance/*",
+      "Condition": {
+        "StringEquals": { "aws:ResourceTag/App": "ai-content-summarizer" }
+      }
+    },
+    {
+      "Sid": "UseRunShellScriptDocument",
+      "Effect": "Allow",
+      "Action": "ssm:SendCommand",
+      "Resource": "arn:aws:ssm:<REGION>::document/AWS-RunShellScript"
+    },
+    {
+      "Sid": "ReadCommandResults",
+      "Effect": "Allow",
+      "Action": ["ssm:ListCommands", "ssm:ListCommandInvocations"],
+      "Resource": "*"
+    }
+  ]
+}
